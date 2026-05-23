@@ -2,13 +2,13 @@ import { Pool } from "pg";
 import { config } from "../config";
 
 // a variable that creat an instance of class Pool with databse url as argument, to create a connection to neonDB when initiated
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: config.database_url,
 });
 
 // Declaration of database and it's table
 export const initDB = async () => {
-  // creates a table named 'users(id, name, email, password, role, created_at, updated_at)
+  // creates a table named users(id, name, email, password, role, created_at, updated_at)
   await pool.query(`
         CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -21,11 +21,9 @@ export const initDB = async () => {
 
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
-        
-
         )
         `);
-
+  // create a table named issues(title, description, type, status, reported_id)
   await pool.query(`
         CREATE TABLE IF NOT EXISTS issues (
         id SERIAL PRIMARY KEY,
