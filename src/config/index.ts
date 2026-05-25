@@ -9,4 +9,5 @@ export const config = {
   database_url: env.CONNECTION_STRING as string,
   secret_key: env.SECRET as string,
   refresh_secret_key: env.SECRET_REFRESH as string,
+  node_env: env.NODE_ENV as string,
 };

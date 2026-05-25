@@ -6,9 +6,7 @@ import { authController } from "./auth.controller";
 const router = Router();
 
 router.get("/", (req: Request, res: Response) => {
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
+  sendResponse(res, 200, {
     message: "authorized page to test the link",
     data: null,
   });

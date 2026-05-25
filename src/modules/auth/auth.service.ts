@@ -7,11 +7,11 @@ import { pool } from "../../db";
 const signUpUser = async (payload: TSignUpUser) => {
   // if payload does not contain a value for role, it will get a default value
   const { name, email, password, role = "contributor" } = payload;
-  console.log({ password });
 
+  // before sending password into database, the given password is encrypted for security
   const hash_password = await brcypt.hash(password, 10);
-  console.log({ hash_password });
 
+  // insertion of user info into database, for successful entry, name, email and role will be returned. password will not be returned
   const user = await pool.query(
     `
         INSERT INTO users(name, email, password_hash, role)
@@ -20,7 +20,11 @@ const signUpUser = async (payload: TSignUpUser) => {
         `,
     [name, email, hash_password, role],
   );
-  console.log(user.rows[0]);
+
+  // return password from return data
+  const {password_hash, ... returnUser} =user.rows[0];
+  // returns the successful entry from database
+  return returnUser;
 };
 
 export const authServices = {
