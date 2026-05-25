@@ -12,6 +12,10 @@ router.get("/", (req: Request, res: Response) => {
   });
 });
 
+// for user signup
 router.post("/signup", authController.authSignup);
+
+// for user login
+router.post("/login", authController.authLogin);
 
 export const authRouter = router;
