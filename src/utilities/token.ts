@@ -13,3 +13,8 @@ export const tokenGeneration = (payload: TTokenUser) => {
 
   return { accessToken, refershToken };
 };
+
+export const tokenDecode = (payload: string) => {
+  const decode = jwt.verify(payload, config.secret_key);
+  return decode;
+};
