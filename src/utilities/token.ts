@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { config } from "../config";
 import type { TSignUpUser, TTokenUser } from "../modules/auth/auth.interface";
 
+// a function to generate accessToken and refreshToken using jwt 
 export const tokenGeneration = (payload: TTokenUser) => {
   const accessToken = jwt.sign(payload, config.secret_key, {
     expiresIn: "1d",
@@ -14,6 +15,7 @@ export const tokenGeneration = (payload: TTokenUser) => {
   return { accessToken, refershToken };
 };
 
+// a function to decode token received from authorization tag of request headers
 export const tokenDecode = (payload: string) => {
   const decode = jwt.verify(payload, config.secret_key);
   return decode;

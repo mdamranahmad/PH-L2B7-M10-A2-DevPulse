@@ -1,3 +1,4 @@
+// type to define issue request
 export type TIssueCreate = {
   title: string;
   description: string;
