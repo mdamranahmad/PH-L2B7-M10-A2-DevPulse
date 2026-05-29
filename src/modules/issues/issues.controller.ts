@@ -157,7 +157,7 @@ const updateIssue = async (req: Request, res: Response) => {
   // a variable to decode the token to get requester information from request headers
   const decodedToken = tokenDecode(req.headers.authorization as string);
 
-  const { id, role} = decodedToken as JwtPayload;
+  const { id, role } = decodedToken as JwtPayload;
 
   // fetch full details of the requested issue from database
   const indIssueFromDB = await issuesService.returnIssueFromDB(
@@ -174,7 +174,7 @@ const updateIssue = async (req: Request, res: Response) => {
   }
 
   const { reporter } = indIssueFromDB[0] as any;
-  
+
   let updatedIssue;
   // update issue in the database if requester has proper authority
   if (role === "maintainer") {
@@ -214,9 +214,61 @@ const updateIssue = async (req: Request, res: Response) => {
   });
 };
 
+// an async function to delete an issue from database
+const deleteIssue = async (req: Request, res: Response) => {
+  // fetch request issue id from url
+  const reqId = req.params.id as string;
+  // return error message if the request does not have proper authorization
+  if (!req.headers.authorization) {
+    sendResponse(res, 401, {
+      message: "Missing Token!",
+      error: true,
+    });
+  }
+  // a variable to decode the token to get requester information from request headers
+  const decodedToken = tokenDecode(req.headers.authorization as string);
+
+  const { id, role } = decodedToken as JwtPayload;
+
+  // fetch full details of the requested issue from database
+  const indIssueFromDB = await issuesService.returnIssueFromDB(
+    decodedToken as TTokenUser,
+    reqId,
+  );
+
+  // response message for succesfull fetch operation of individual issue
+  if (!indIssueFromDB || indIssueFromDB.length === 0) {
+    return sendResponse(res, 404, {
+      message: "Invalid request",
+      error: true,
+    });
+  }
+
+  const { reporter } = indIssueFromDB[0] as any;
+
+  // update issue in the database if requester has proper authority
+  if (role === "maintainer") {
+    const deletedIssue = await issuesService.deleteIssueFromDB(
+      reqId,
+      decodedToken as TTokenUser,
+    );
+    // return deleted issue
+    return sendResponse(res, 200, {
+      message: "Issue deleted successfully.",
+      data: deletedIssue,
+    });
+  } else {
+    return sendResponse(res, 403, {
+      message: "Forbidden",
+      error: true,
+    });
+  }
+};
+
 export const issuesController = {
   createIssue,
   getIssues,
   getIssuebyId,
   updateIssue,
+  deleteIssue,
 };

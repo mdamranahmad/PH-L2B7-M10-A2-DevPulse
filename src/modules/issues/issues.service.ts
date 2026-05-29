@@ -204,6 +204,23 @@ const contributorUpdateIssueInDB = async (
   return updatedIssue;
 };
 
+// an async function to delete a specific issue in database
+const deleteIssueFromDB = async (id: string, payload: TTokenUser) => {
+  // check existance of user in database
+  const fetchUsrInDB = checkUsrInDB(payload);
+
+  // update datababse as per requested fields
+  const result = await pool.query(
+    `
+    delete from issues where id=$1 returning *  
+    `,
+    [id],
+  );
+
+  const deletedIssue = result.rows[0];
+  return deletedIssue;
+};
+
 export const issuesService = {
   createIssueInDB,
   returnUserFromDB,
@@ -211,4 +228,5 @@ export const issuesService = {
   returnIssueFromDB,
   maintainerUpdateIssueInDB,
   contributorUpdateIssueInDB,
+  deleteIssueFromDB,
 };
