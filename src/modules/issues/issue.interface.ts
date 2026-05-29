@@ -5,3 +5,10 @@ export type TIssueCreate = {
   type: string;
   status?: string;
 };
+
+export type TIssueUpdate = {
+  title?: string;
+  description?: string;
+  type?: string;
+  status?: string;
+};

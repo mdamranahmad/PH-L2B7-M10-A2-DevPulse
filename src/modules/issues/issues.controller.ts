@@ -3,6 +3,7 @@ import { issuesService } from "./issues.service";
 import { tokenDecode } from "../../utilities/token";
 import { sendResponse } from "../../utilities/sendResponse";
 import type { TTokenUser } from "../auth/auth.interface";
+import type { JwtPayload } from "jsonwebtoken";
 
 // an async function to create a new issue into the database
 const createIssue = async (req: Request, res: Response) => {
@@ -122,7 +123,7 @@ const getIssuebyId = async (req: Request, res: Response) => {
   // a variable to decode the token to get requester information from request headers
   const decodedToken = tokenDecode(req.headers.authorization as string);
 
-  // fetch all issues from database
+  // fetch full details of the requested issue from database
   const indIssueFromDB = await issuesService.returnIssueFromDB(
     decodedToken as TTokenUser,
     reqId,
@@ -142,8 +143,80 @@ const getIssuebyId = async (req: Request, res: Response) => {
   }
 };
 
+// an async function to update an issue in database
+const updateIssue = async (req: Request, res: Response) => {
+  // fetch request issue id from url
+  const reqId = req.params.id as string;
+  // return error message if the request does not have proper authorization
+  if (!req.headers.authorization) {
+    sendResponse(res, 401, {
+      message: "Missing Token!",
+      error: true,
+    });
+  }
+  // a variable to decode the token to get requester information from request headers
+  const decodedToken = tokenDecode(req.headers.authorization as string);
+
+  const { id, role} = decodedToken as JwtPayload;
+
+  // fetch full details of the requested issue from database
+  const indIssueFromDB = await issuesService.returnIssueFromDB(
+    decodedToken as TTokenUser,
+    reqId,
+  );
+
+  // response message for succesfull fetch operation of individual issue
+  if (!indIssueFromDB || indIssueFromDB.length === 0) {
+    return sendResponse(res, 404, {
+      message: "Invalid request",
+      error: true,
+    });
+  }
+
+  const { reporter } = indIssueFromDB[0] as any;
+  
+  let updatedIssue;
+  // update issue in the database if requester has proper authority
+  if (role === "maintainer") {
+    updatedIssue = await issuesService.maintainerUpdateIssueInDB(
+      req.body,
+      reqId,
+      decodedToken as TTokenUser,
+    );
+  }
+
+  // update issue field in the database if requester is the owner of the issue
+  if (role === "contributor" && id === reporter.id) {
+    if (req.body.status) {
+      return sendResponse(res, 403, {
+        message: "Forbidden",
+        error: true,
+      });
+    }
+    updatedIssue = await issuesService.contributorUpdateIssueInDB(
+      req.body,
+      reqId,
+      decodedToken as TTokenUser,
+    );
+  }
+
+  // return error message if requester is not owner of the issue
+  if (role === "contributor" && id !== reporter.id) {
+    return sendResponse(res, 403, {
+      message: "Forbidden",
+      error: true,
+    });
+  }
+  // return updated issue
+  sendResponse(res, 200, {
+    message: "Issue updated successfully.",
+    data: updatedIssue,
+  });
+};
+
 export const issuesController = {
   createIssue,
   getIssues,
   getIssuebyId,
+  updateIssue,
 };

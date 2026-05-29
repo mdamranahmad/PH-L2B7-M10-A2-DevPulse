@@ -1,7 +1,7 @@
 import { response, type Request } from "express";
 import { pool } from "../../db";
 import type { TTokenUser } from "../auth/auth.interface";
-import type { TIssueCreate } from "./issue.interface";
+import type { TIssueCreate, TIssueUpdate } from "./issue.interface";
 
 // an async funtion to return userId extracted from database once the user provides valid email and had access
 const returnUserFromDB = async (payload: TTokenUser) => {
@@ -137,9 +137,78 @@ const returnIssueFromDB = async (payload: TTokenUser, id: string) => {
   return indIssueFromDB;
 };
 
+// an async function to update a specific issue in database
+const maintainerUpdateIssueInDB = async (
+  payloadIssue: TIssueUpdate,
+  id: string,
+  payloadUser: TTokenUser,
+) => {
+  // check existance of user in database
+  const fetchUsrInDB = checkUsrInDB(payloadUser);
+
+  // destructuring requested fields to update
+  const { title, description, type, status } = payloadIssue;
+
+  // update datababse as per requested fields
+  const result = await pool.query(
+    `
+    update issues
+    set
+    title=coalesce($1, title),
+    description=coalesce($2, description),
+    type=coalesce($3, type),
+    status=coalesce($4, status),
+    updated_at=now()
+    where id=$5
+    returning *
+    `,
+    [title, description, type, status, id],
+  );
+
+  const updatedIssue = result.rows[0];
+
+  // return updated issue
+  return updatedIssue;
+};
+
+// an async function to update a specific issue in database for it's owner
+const contributorUpdateIssueInDB = async (
+  payloadIssue: TIssueUpdate,
+  id: string,
+  payloadUser: TTokenUser,
+) => {
+  // check existance of user in database
+  const fetchUsrInDB = checkUsrInDB(payloadUser);
+
+  // destructuring requested fields to update
+  const { title, description, type } = payloadIssue;
+
+  // update datababse as per requested fields
+  const result = await pool.query(
+    `
+    update issues
+    set
+    title=coalesce($1, title),
+    description=coalesce($2, description),
+    type=coalesce($3, type),
+    updated_at=now()
+    where id=$4
+    returning *
+    `,
+    [title, description, type, id],
+  );
+
+  const updatedIssue = result.rows[0];
+
+  // return updated issue
+  return updatedIssue;
+};
+
 export const issuesService = {
   createIssueInDB,
   returnUserFromDB,
   returnIssuesFromDB,
   returnIssueFromDB,
+  maintainerUpdateIssueInDB,
+  contributorUpdateIssueInDB,
 };
