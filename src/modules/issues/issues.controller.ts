@@ -45,13 +45,14 @@ const getIssues = async (req: Request, res: Response) => {
   // a variable to decode the token to get requester information from request headers
   const decodedToken = tokenDecode(req.headers.authorization as string);
 
+  // fetch all issues from database
   const allIssuesFromDB = await issuesService.returnIssuesFromDB(
     decodedToken as TTokenUser,
   );
 
-  console.log("request url: ", req.url);
-
+  // sort returned issues from database as per time, type and status
   const sortIssues = () => {
+    // default sort by time
     if (req.url === "/" || req.url === "/?sort=newest") {
       const sortByTime = [...(allIssuesFromDB ?? [])].sort((a, b) => {
         return (
@@ -61,14 +62,15 @@ const getIssues = async (req: Request, res: Response) => {
       return sortByTime;
     }
 
+    // sort by type
     if (req.url === "/?sort=type") {
       const sortByType = [...(allIssuesFromDB ?? [])].sort((a, b) => {
         return a.type.localeCompare(b.type);
       });
-
       return sortByType;
     }
 
+    // sort by status
     if (req.url === "/?sort=status") {
       const statusPriority: { [key: string]: number } = {
         open: 1,
@@ -84,10 +86,14 @@ const getIssues = async (req: Request, res: Response) => {
       return sortByStatus;
     }
 
+    // return null for otherwise
     return null;
   };
 
+  // return sorted issues
   const sortedIssues = sortIssues();
+
+  // response message for succesfull fetch operation of sorted issues
   if (sortedIssues !== null) {
     sendResponse(res, 200, {
       message: "Issues retrived successfully",
@@ -101,7 +107,43 @@ const getIssues = async (req: Request, res: Response) => {
   }
 };
 
+// an async function to get individual issue from database
+const getIssuebyId = async (req: Request, res: Response) => {
+  // fetch request issue id from url
+  const reqId = req.params.id as string;
+  // return error message if the request does not have proper authorization
+  if (!req.headers.authorization) {
+    sendResponse(res, 401, {
+      message: "Missing Token!",
+      error: true,
+    });
+  }
+
+  // a variable to decode the token to get requester information from request headers
+  const decodedToken = tokenDecode(req.headers.authorization as string);
+
+  // fetch all issues from database
+  const indIssueFromDB = await issuesService.returnIssueFromDB(
+    decodedToken as TTokenUser,
+    reqId,
+  );
+
+  // response message for succesfull fetch operation of individual issue
+  if (indIssueFromDB !== null) {
+    sendResponse(res, 200, {
+      message: "Issues retrived successfully",
+      data: indIssueFromDB,
+    });
+  } else {
+    sendResponse(res, 404, {
+      message: "Invalid request",
+      error: true,
+    });
+  }
+};
+
 export const issuesController = {
   createIssue,
   getIssues,
+  getIssuebyId,
 };

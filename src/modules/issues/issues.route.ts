@@ -5,5 +5,6 @@ const router = Router();
 
 router.post("/", issuesController.createIssue);
 router.get("/", issuesController.getIssues);
+router.get("/:id", issuesController.getIssuebyId);
 
 export const issuesRouter = router;

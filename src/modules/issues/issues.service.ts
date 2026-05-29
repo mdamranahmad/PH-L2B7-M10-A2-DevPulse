@@ -36,8 +36,8 @@ const createIssueInDB = async (payload: TIssueCreate, userId: number) => {
   return issue;
 };
 
-// an async function to return all isseus from database
-const returnIssuesFromDB = async (payload: TTokenUser) => {
+// an asynct function to check existance of user email in database,
+const checkUsrInDB = async (payload: TTokenUser) => {
   const { email } = payload;
 
   // return of userEmail in object from database
@@ -53,12 +53,11 @@ const returnIssuesFromDB = async (payload: TTokenUser) => {
 
   // return error of email does not exist in database
   if (!userEmail) return null;
+};
 
-  const resultObj = await pool.query(`
-    select * from issues
-    `);
-
-  const issuePromises = resultObj.rows.map(async (i) => {
+// an asynct function to build result from issues fetch from database as per desired structure
+const buildResult = async (payload: any[]) => {
+  const issuePromises = payload.map(async (i) => {
     const {
       id,
       title,
@@ -95,12 +94,52 @@ const returnIssuesFromDB = async (payload: TTokenUser) => {
 
   const unSortedResult = await Promise.all(issuePromises);
 
+  // retrun error if the request fetch no data
+  if (!unSortedResult.length) return null;
+
+  return unSortedResult;
+};
+
+// an async function to return all isseus from database
+const returnIssuesFromDB = async (payload: TTokenUser) => {
+  // check existance of user in database
+  const fetchUsrInDB = checkUsrInDB(payload);
+
+  // fetch all issues from database
+  const resultObj = await pool.query(`
+    select * from issues
+    `);
+
+  // fetch unsorted issues from database as per desired structure
+  const unSortedResult = buildResult(resultObj.rows);
+
   const allIssuesFromDB = unSortedResult;
   return allIssuesFromDB;
+};
+
+// an async function to return individual isseu from database
+const returnIssueFromDB = async (payload: TTokenUser, id: string) => {
+  // check existance of user in database
+  const fetchUsrInDB = checkUsrInDB(payload);
+
+  // fetch all issues from database
+  const resultObj = await pool.query(
+    `
+    select * from issues where id=$1
+    `,
+    [id],
+  );
+
+  // fetch unsorted issues from database as per desired structure
+  const result = buildResult(resultObj.rows);
+
+  const indIssueFromDB = result;
+  return indIssueFromDB;
 };
 
 export const issuesService = {
   createIssueInDB,
   returnUserFromDB,
   returnIssuesFromDB,
+  returnIssueFromDB,
 };
