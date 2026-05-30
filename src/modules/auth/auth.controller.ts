@@ -6,7 +6,7 @@ import { tokenGeneration } from "../../utilities/token";
 // a function to signup user into database
 const authSignup = async (req: Request, res: Response) => {
   const user = await authServices.signUpUser(req.body);
-  sendResponse(res, 200, {
+  sendResponse(res, 201, {
     message: `Registration successfull for ${user.name}.`,
     data: user,
   });
